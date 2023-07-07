@@ -4,6 +4,7 @@ import h5py
 import scipy
 from PIL import Image
 from scipy import ndimage
+import imageio.v2 as imageio
 from lr_utils import load_dataset
 
 def sigmoid(z):
@@ -135,14 +136,57 @@ def main():
 
     # Create the model
     d = model(train_set_x, train_set_y, test_set_x, test_set_y, num_iterations = 2000, learning_rate = 0.005, print_cost = False)
+    
+    folder_path = "images/"
+    image = ""
+    exit = False
 
-    # Plot learning curve (with costs)
-    costs = np.squeeze(d['costs'])
-    plt.plot(costs)
-    plt.ylabel('cost')
-    plt.xlabel('iterations (per hundreds)')
-    plt.title("Learning rate =" + str(d["learning_rate"]))
-    plt.show()
+    while exit == False:
+        print ("Choose an option:")
+        print ("1. Enter the name of the image")
+        print ("2. Exit")
+
+        print("Option:", end=" ")
+        option = input()
+
+        if option != "1" and option != "2":
+            print ("Invalid option!")
+            continue
+
+        if option == "1":
+            print("Name of the image:", end=" ")
+            image_name = input()
+            fname = folder_path + image_name
+            # image = np.array(ndimage.imread(fname, flatten=False))
+
+            try:
+                image = imageio.imread(fname)
+            except FileNotFoundError:
+                print("Image not found!")
+                continue
+
+            image = image / 255
+
+            # image = scipy.misc.imresize(image, size=(num_px,num_px)).reshape((1, num_px*num_px*3)).T
+            my_image = scipy.ndimage.zoom(image, (num_px / image.shape[0], num_px / image.shape[1], 1))
+            my_image = my_image.reshape((1, num_px*num_px*3)).T
+            my_predicted_image = predict(d["w"], d["b"], my_image)
+
+            print("y = " + str(np.squeeze(my_predicted_image)) + ", your algorithm predicts a \"" + classes[int(np.squeeze(my_predicted_image)),].decode("utf-8") +  "\" picture.")
+            plt.imshow(image)
+            plt.show()  
+        else:
+            exit = True
+
+
+    # # Plot learning curve (with costs)
+    # costs = np.squeeze(d['costs'])
+    # plt.plot(costs)
+    # plt.ylabel('cost')
+    # plt.xlabel('iterations (per hundreds)')
+    # plt.title("Learning rate =" + str(d["learning_rate"]))
+    # plt.show()
+
 
 if __name__ == "__main__":
     main()
